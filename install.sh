@@ -28,5 +28,5 @@ esac
 
 wget https://github.com/MattBlack85/rnav-alerts/releases/download/$VERSION/$PACKAGE_NAME-$ARCH-$VERSION.$EXTENSION
 tar -xvzf rnav-alerts*.tar.gz
-rm rnavalerts*tar.gz
+rm rnav-alerts*tar.gz
 sudo mv rnav-alerts /usr/local/bin/
