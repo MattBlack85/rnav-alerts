@@ -10,6 +10,8 @@ use std::str;
 
 use serde::Deserialize;
 
+mod airconfig;
+
 #[derive(Deserialize)]
 struct Airdata {
     msg: String,
@@ -37,24 +39,68 @@ struct Airdata {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // check if the config file is present, make one if not (stored under ~/.config/rnav-alert.cfg
+    if !airconfig::check_config_exists() {
+        let mut config = String::new();
 
-    // read the config and check if we have the coordinates of the place we want to monitor
+        println!("First, I will ask you about the place that I should monitor\n");
 
-    // if not ask for the coordinates of the place, first latitude then longitude, invert them before storing them
-    println!("First, I will ask you about the place that I should monitor\n");
-    let latitude: String = Input::new()
-        .with_prompt("Provide the latitude")
-        .interact_text()
-        .unwrap();
+        let latitude: String = Input::new()
+            .with_prompt("Provide the latitude")
+            .interact_text()
+            .unwrap();
 
-    let longitude: String = Input::new()
-        .with_prompt("Provide the longitude")
-        .interact_text()
+        let longitude: String = Input::new()
+            .with_prompt("Provide the longitude")
+            .interact_text()
+            .unwrap();
+
+        let geo_conf = format!(
+            "[geo]\nlatitude = {}\nlongitude = {}\n\n",
+            latitude, longitude
+        );
+
+        let alerting_distance: String = Input::new()
+            .with_prompt("Provide the radius of the are we want to monitor")
+            .interact_text()
+            .unwrap();
+
+        let limit_config = format!("[limits]\nalerting_distance = {}\n\n", alerting_distance);
+
+        let host: String = Input::new()
+            .with_prompt("IP of the host running 1090dump (leave blank for default 127.0.0.1)")
+            .default("127.0.0.1".into())
+            .interact_text()
+            .unwrap();
+
+        let port: String = Input::new()
+            .with_prompt("port for the CSV output run by 1090dump (leave blank for default 30003)")
+            .default("30003".into())
+            .interact_text()
+            .unwrap();
+
+        let generic_config = format!(
+            "[generic]\n1090dump_host = {}\n1090dump_port = {}\n\n",
+            host, port
+        );
+
+        config = config + &geo_conf + &limit_config + &generic_config;
+        airconfig::store_config(config);
+    }
+
+    let conf = airconfig::read_config();
+
+    let latitude = conf["geo"]["latitude"].clone().unwrap();
+    let longitude = conf["geo"]["longitude"].clone().unwrap();
+    let host = conf["generic"]["1090dump_host"].clone().unwrap();
+    let port = conf["generic"]["1090dump_port"].clone().unwrap();
+    let alerting_distance = conf["limits"]["alerting_distance"]
+        .clone()
+        .unwrap()
+        .parse::<f64>()
         .unwrap();
 
     let place = point!(x: longitude.parse::<f64>().unwrap(), y: latitude.parse::<f64>().unwrap());
-    let mut stream = TcpStream::connect("10.0.1.37:30003")?;
+    let mut stream = TcpStream::connect(format!("{}:{}", host, port))?;
 
     loop {
         let mut buf = [0; 8192];
@@ -66,7 +112,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             // The iterator yields Result<StringRecord, Error>, so we check the
             // error here.
             // let record = result?;
-	    let airdata: Airdata = result?.deserialize(None)?;
+            let airdata: Airdata = result?.deserialize(None)?;
 
             let lat = airdata.latitude;
             let lon = airdata.longitude;
@@ -74,11 +120,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             if lat != "" && lon != "" {
                 let plane = point!(x: lon.parse::<f64>().unwrap(), y: lat.parse::<f64>().unwrap());
                 let distance = place.geodesic_distance(&plane);
-                println!(
-                    "The distance between you and the plane {} is {:.3} Km",
-                    airdata.aircraft_address,
-                    distance / 1000f64
-                );
+
+                if distance < alerting_distance * 1000f64 {
+                    println!(
+                        "The distance between you and the plane {} is {:.3} Km",
+                        airdata.aircraft_address,
+                        distance / 1000f64
+                    );
+                }
             }
         }
     }
