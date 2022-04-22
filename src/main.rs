@@ -1,4 +1,3 @@
-use dialoguer::Input;
 use geo::point;
 use geo::prelude::GeodesicDistance;
 
@@ -40,51 +39,7 @@ struct Airdata {
 
 fn main() -> Result<(), Box<dyn Error>> {
     if !airconfig::check_config_exists() {
-        let mut config = String::new();
-
-        println!("First, I will ask you about the place that I should monitor\n");
-
-        let latitude: String = Input::new()
-            .with_prompt("Provide the latitude")
-            .interact_text()
-            .unwrap();
-
-        let longitude: String = Input::new()
-            .with_prompt("Provide the longitude")
-            .interact_text()
-            .unwrap();
-
-        let geo_conf = format!(
-            "[geo]\nlatitude = {}\nlongitude = {}\n\n",
-            latitude, longitude
-        );
-
-        let alerting_distance: String = Input::new()
-            .with_prompt("Provide the radius of the are we want to monitor")
-            .interact_text()
-            .unwrap();
-
-        let limit_config = format!("[limits]\nalerting_distance = {}\n\n", alerting_distance);
-
-        let host: String = Input::new()
-            .with_prompt("IP of the host running 1090dump (leave blank for default 127.0.0.1)")
-            .default("127.0.0.1".into())
-            .interact_text()
-            .unwrap();
-
-        let port: String = Input::new()
-            .with_prompt("port for the CSV output run by 1090dump (leave blank for default 30003)")
-            .default("30003".into())
-            .interact_text()
-            .unwrap();
-
-        let generic_config = format!(
-            "[generic]\n1090dump_host = {}\n1090dump_port = {}\n\n",
-            host, port
-        );
-
-        config = config + &geo_conf + &limit_config + &generic_config;
-        airconfig::store_config(config);
+	airconfig::setup_config();
     }
 
     let conf = airconfig::read_config();
