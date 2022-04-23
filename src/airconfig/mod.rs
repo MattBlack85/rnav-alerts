@@ -9,6 +9,8 @@ use dirs;
 static CONFIG_PATH: &'static str = ".config/rnav_alerts/";
 static CONFIG_FILENAME: &'static str = "alerts.cfg";
 
+
+/// Checks if the configuration file exists, if not create it.
 pub fn check_config_exists() -> bool {
     let full_path = format!(
         "{}/{}/{}",
@@ -35,6 +37,8 @@ pub fn check_config_exists() -> bool {
     };
 }
 
+/// Convenient entry point to read the configuration file, the configuration
+/// is parsed and dumped into a HashMap which is then returned to the user so values can be fetched.
 pub fn read_config() -> HashMap<String, HashMap<String, Option<String>>> {
     let mut config = Ini::new();
     let map = config
@@ -48,25 +52,18 @@ pub fn read_config() -> HashMap<String, HashMap<String, Option<String>>> {
     return map;
 }
 
-fn store_config(content: String) {
-    let full_path = format!(
-        "{}/{}/{}",
-        dirs::home_dir().unwrap().as_path().display().to_string(),
-        CONFIG_PATH,
-        CONFIG_FILENAME
-    );
-
-    match std::fs::write(&full_path, content.as_bytes()) {
-        Ok(_) => (),
-        Err(e) => panic!("{}", e),
-    }
-}
-
+/// Creates the configuration file and stores it on the disk.
+///
+/// This function is meant to be used only once, when the configuration file
+/// is not found on the disk. It will drive the user through some questions
+/// building an ini compatible file that will be stored at $HOME/.config/rnav-alerts/alerts.cfg
 pub fn setup_config() {
+
     let mut config = String::new();
 
     println!("First, I will ask you about the place that I should monitor\n");
 
+    // Ask the user for the current 1090dump installation latitude
     let latitude: String = Input::new()
         .with_prompt("Provide the latitude")
         .interact_text()
@@ -117,5 +114,16 @@ pub fn setup_config() {
     );
 
     config = config + &geo_conf + &limit_config + &generic_config;
-    store_config(config);
+
+    let full_path = format!(
+        "{}/{}/{}",
+        dirs::home_dir().unwrap().as_path().display().to_string(),
+        CONFIG_PATH,
+        CONFIG_FILENAME
+    );
+
+    match std::fs::write(&full_path, config.as_bytes()) {
+        Ok(_) => (),
+        Err(e) => panic!("{}", e),
+    }
 }
