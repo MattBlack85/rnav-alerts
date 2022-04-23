@@ -7,35 +7,11 @@ use std::net::TcpStream;
 use std::error::Error;
 use std::str;
 
-use serde::Deserialize;
-
+mod aero;
 mod airconfig;
 
-#[derive(Deserialize)]
-struct Airdata {
-    msg: String,
-    msg_type: String,
-    dummy_1: String,
-    dummy_2: String,
-    aircraft_address: String,
-    dummy_3: String,
-    date_received: String,
-    hour_received: String,
-    date_written: String,
-    hour_written: String,
-    callsign: String,
-    altitude: String,
-    groundspeed: String,
-    ground_track: String,
-    latitude: String,
-    longitude: String,
-    vertical_rate: String,
-    squawk: String,
-    alert_flag: String,
-    emergency_flag: String,
-    spi_flag: String,
-    ground_flag: String,
-}
+use aero::structs::Airdata;
+
 
 fn main() -> Result<(), Box<dyn Error>> {
     if !airconfig::check_config_exists() {
