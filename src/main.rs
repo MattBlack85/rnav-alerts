@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let host = conf["generic"]["1090dump_host"].clone().unwrap();
     let port = conf["generic"]["1090dump_port"].clone().unwrap();
     let units = conf["generic"]["units"].clone().unwrap();
-    let mut alerting_distance = conf["limits"]["alerting_distance"]
+    let alerting_distance = conf["limits"]["alerting_distance"]
         .clone()
         .unwrap()
         .parse::<f64>()
