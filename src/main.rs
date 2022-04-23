@@ -39,7 +39,7 @@ struct Airdata {
 
 fn main() -> Result<(), Box<dyn Error>> {
     if !airconfig::check_config_exists() {
-	airconfig::setup_config();
+        airconfig::setup_config();
     }
 
     let conf = airconfig::read_config();
@@ -48,7 +48,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let longitude = conf["geo"]["longitude"].clone().unwrap();
     let host = conf["generic"]["1090dump_host"].clone().unwrap();
     let port = conf["generic"]["1090dump_port"].clone().unwrap();
-    let alerting_distance = conf["limits"]["alerting_distance"]
+    let units = conf["generic"]["units"].clone().unwrap();
+    let mut alerting_distance = conf["limits"]["alerting_distance"]
         .clone()
         .unwrap()
         .parse::<f64>()
@@ -74,13 +75,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             if lat != "" && lon != "" {
                 let plane = point!(x: lon.parse::<f64>().unwrap(), y: lat.parse::<f64>().unwrap());
-                let distance = place.geodesic_distance(&plane);
+                let mut distance = place.geodesic_distance(&plane);
 
-                if distance < alerting_distance * 1000f64 {
+                if units == "mi" {
+                    distance = distance * 0.0006213712f64;
+                } else {
+                    distance = distance / 1000f64;
+                }
+
+                if distance < alerting_distance {
                     println!(
-                        "The distance between you and the plane {} is {:.3} Km",
-                        airdata.aircraft_address,
-                        distance / 1000f64
+                        "The distance between you and the plane {} is {:.3} {}",
+                        airdata.aircraft_address, distance, units
                     );
                 }
             }

@@ -1,10 +1,10 @@
-use dialoguer::Input;
-
 use std::collections::HashMap;
 use std::io::Write;
 use std::path::Path;
 
 use configparser::ini::Ini;
+use dialoguer::console::Term;
+use dialoguer::{Input, Select};
 use dirs;
 
 static CONFIG_PATH: &'static str = ".config/rnav_alerts/";
@@ -83,8 +83,16 @@ pub fn setup_config() {
         latitude, longitude
     );
 
+    let units = vec!["km", "mi"];
+    let unit_chosen = Select::new()
+        .with_prompt("Select how units should be displayed")
+        .items(&units)
+        .default(0)
+        .interact_on_opt(&Term::stderr())
+        .unwrap();
+
     let alerting_distance: String = Input::new()
-        .with_prompt("Provide the radius of the are we want to monitor")
+        .with_prompt("Provide the radius of the area we want to monitor")
         .interact_text()
         .unwrap();
 
@@ -103,8 +111,10 @@ pub fn setup_config() {
         .unwrap();
 
     let generic_config = format!(
-        "[generic]\n1090dump_host = {}\n1090dump_port = {}\n\n",
-        host, port
+        "[generic]\n1090dump_host = {}\n1090dump_port = {}\nunits = {}\n\n",
+        host,
+        port,
+        units[unit_chosen.unwrap()]
     );
 
     config = config + &geo_conf + &limit_config + &generic_config;
