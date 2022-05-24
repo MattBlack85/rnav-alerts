@@ -9,7 +9,6 @@ use dirs;
 static CONFIG_PATH: &'static str = ".config/rnav_alerts/";
 static CONFIG_FILENAME: &'static str = "alerts.cfg";
 
-
 /// Checks if the configuration file exists, if not create it.
 pub fn check_config_exists() -> bool {
     let full_path = format!(
@@ -58,7 +57,6 @@ pub fn read_config() -> HashMap<String, HashMap<String, Option<String>>> {
 /// is not found on the disk. It will drive the user through some questions
 /// building an ini compatible file that will be stored at $HOME/.config/rnav-alerts/alerts.cfg
 pub fn setup_config() {
-
     let mut config = String::new();
 
     println!("First, I will ask you about the place that I should monitor\n");

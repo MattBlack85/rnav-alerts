@@ -1,13 +1,13 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Airdata {
     pub msg: String,
     pub msg_type: String,
-    dummy_1: String,
-    dummy_2: String,
+    _dummy_1: String,
+    _dummy_2: String,
     pub aircraft_address: String,
-    dummy_3: String,
+    _dummy_3: String,
     pub date_received: String,
     pub hour_received: String,
     pub date_written: String,
